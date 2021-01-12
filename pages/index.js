@@ -20,7 +20,7 @@ export default function Home () {
             Desenvolvedor Full Stack
           </p>
           <div className="contact">
-            <a target="_blank" href="mailto:danielpfsoares@gmail.com" className="list-item"><Email /><span>danielpfsoares@gmail.com</span></a>
+            <a target="_blank" href="mailto:contato@danielsoares.dev" className="list-item"><Email /><span>contato@danielsoares.dev</span></a>
             <a target="_blank" href="https://www.linkedin.com/in/danielpfsoares" className="list-item"><LinkedIn /><span>LinkedIn</span></a>
             <a target="_blank" href="https://github.com/danielpfs" className="list-item"><GitHub /><span>GitHub</span></a>
             <a target="_blank" href="https://www.instagram.com/danielpfsoares" className="list-item"><Instagram /><span>Instagram</span></a>
