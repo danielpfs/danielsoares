@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  app:
+    image: oven/bun:slim
+    working_dir: /app
+    entrypoint: >
+      sh -c 'su $$(stat -c "%U" $$(pwd)) -c "
+          bun install
+          bun --bun run dev
+      "'
+    volumes:
+      - ./:/app
+    ports:
+      - 3000:3000
+    restart: on-failure
