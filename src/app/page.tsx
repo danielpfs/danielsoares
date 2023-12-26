@@ -1,84 +1,99 @@
 "use client";
 import Contact from "@/components/Contact";
-import Terminal from "@/libs/terminal/Terminal";
-import { Component, KeyboardEventHandler, lazy, useState } from "react";
+import createTerminal from "@/libs/terminal";
+import Output from "@/libs/terminal/output";
+import React, { useEffect, useState } from "react";
 
-const terminal = new Terminal("danielsoares.dev: ", [
+const terminal = createTerminal('<span class="mr-2 font-bold">danielsoares.dev:</span>', [
   {
     name: "help",
     exec: (terminal) => {
-      terminal.getRender()("list of available commands:");
-      terminal.getRender()(
+      terminal.render.output(Output.success("list of available commands:"));
+
+      return Output.success(
         terminal.commands
           .map((c) => (typeof c.name === "string" ? c.name : null))
           .join(" "),
       );
-      return true;
     },
   },
   {
     name: "contact",
     exec: async () => {
-      terminal.getRender()("loading...");
-      terminal.getRender()(
+      terminal.render.output(Output.success("loading..."));
+
+      return Output.success(
         <div className="font-sans my-2 flex justify-center">
           <Contact />
         </div>,
       );
-
-      return true;
     },
   },
 ]);
 
-const keyFn: KeyboardEventHandler<HTMLDivElement> = (e) => {
-  if (e.key !== "Enter") return;
-
-  e.preventDefault();
-
-  const input = e.target.innerText.trim();
-
-  e.target.innerHTML = "";
-
-  return terminal.input(input);
-};
-
 export default function TerminalView() {
-  let [outputs, setOutputs] = useState<(string | Element)[]>([
-    "Welcome!",
-    new Date().toLocaleDateString(undefined, {
+  const [outputs, setOutput] = useState<Output[]>([
+    Output.success('Connection to danielsoares.dev opened.'),
+    Output.success('Welcome!'),
+    Output.success(new Date().toLocaleDateString(undefined, {
       hour: "numeric",
       minute: "numeric",
-      second: "numeric",
-    }),
+      second: "numeric"
+    }))
   ]);
-  terminal.setRender((value) => {
-    outputs = [...outputs, value];
-    setOutputs(outputs);
+  terminal.render.setInputHandler((value: string, caret: number) => {
+    const el = document.querySelector("#input");
+    if (!el) return;
+
+    el.innerHTML =
+      value.slice(0, caret) +
+      '<span class="bg-zinc-500 absolute h-5 w-2.5 animate-caret-terminal -z-10"></span>' +
+      value.slice(caret);
+  });
+
+  terminal.render.setOutputHandler((value) => {
+    setOutput((outputs) => {
+      return [...outputs, value];
+    });
   });
 
   const restoreFocus = () => {
     document.querySelector("#input")?.focus();
   };
 
+  useEffect(() => {
+    restoreFocus()
+    terminal.input.setInput('')
+  })
+
   return (
     <main className="min-h-screen font-mono" onClick={restoreFocus}>
       <div className="container mx-auto p-4">
         {/* Outputs */}
         {outputs.map((o, i) => (
-          <div key={i} className="min-h-6 whitespace-pre-wrap">
-            {o}
+          <div key={`output-${i}`} className="min-h-6 whitespace-pre-wrap">
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
+            {typeof o.data === "string" ? (<div dangerouslySetInnerHTML={{ __html: o.data }} />) : (
+              o.data as JSX.Element
+            )}
           </div>
         ))}
         {/* Input */}
         <div>
-          <span className="mr-2">{terminal.getPrefix().trim()}</span>
-          <span
-            id="input"
-            className="break-all outline-none"
-            contentEditable="true"
-            onKeyDown={keyFn}
-          ></span>
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
+          <span dangerouslySetInnerHTML={{ __html: terminal.render.prefix }} />
+          <span className="relative">
+            <span
+              id="input"
+              className="break-all outline-none caret-transparent whitespace-break-spaces"
+              contentEditable="true"
+              onKeyDown={(event) =>
+                terminal.render.keyboardEventHandler(
+                  event as unknown as KeyboardEvent,
+                )
+              }
+            />
+          </span>
         </div>
         {/* Suggestions */}
         <div></div>
