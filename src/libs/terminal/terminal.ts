@@ -1,6 +1,7 @@
 import Input from "./input";
 import Keyboard, { Keys } from "./keyboard";
 import Output from "./output";
+import Plugin from "./plugin";
 import Render from "./render";
 
 type Command = {
@@ -10,57 +11,72 @@ type Command = {
 };
 
 export default class Terminal {
-  public readonly input = new Input()
+  public readonly input = new Input();
 
-  constructor(public readonly render: Render, public readonly keyboard: Keyboard, public readonly commands: Command[]) {
-    this.render.setTerminal(this)
+  constructor(
+    public readonly render: Render,
+    public readonly keyboard: Keyboard,
+    public readonly plugins: { [keys: string]: typeof Plugin },
+    public readonly commands: Command[],
+  ) {
+    this.render.setTerminal(this);
 
-    this.keyboard.listen(event => {
+    this.keyboard.listen((event) => {
       switch (event.key) {
         case Keys.backspace:
-          this.input.appendInput('')
+          this.input.appendInput("");
           return true;
         case Keys.delete:
-          if (this.input.getCaret() >= this.input.getInput().length) return false
+          if (this.input.getCaret() >= this.input.getInput().length)
+            return false;
 
-          this.input.setCaret(this.input.getCaret() + 1)
-          this.input.appendInput('')
+          this.input.setCaret(this.input.getCaret() + 1);
+          this.input.appendInput("");
 
           return true;
 
         case Keys.left:
-          this.input.setCaret(this.input.getCaret() - 1)
+          this.input.setCaret(this.input.getCaret() - 1);
           return true;
         case Keys.right:
-          this.input.setCaret(this.input.getCaret() + 1)
+          this.input.setCaret(this.input.getCaret() + 1);
           return true;
 
         case Keys.enter:
-          this.execute()
+          this.execute();
           return true;
       }
 
-      if (event.key.length > 1 || event.altKey || event.controlKey) return
+      if (event.key.length > 1 || event.altKey || event.controlKey) return;
 
-      this.input.appendInput(event.key)
+      this.input.appendInput(event.key);
 
-      return true
-    })
+      return true;
+    });
+
+    for (const key in this.plugins) {
+      new this.plugins[key](this);
+    }
   }
 
   async execute() {
-    this.render.output(Output.success(this.render.prefix + this.input.getInput()))
+    const input = this.input.getInput().trim();
+    this.render.output(Output.success(this.render.prefix + input));
 
-    const [commandName, ...args] = this.input.getInput().split(' ')
+    if (!input) return;
 
-    this.input.setInput('');
+    const [commandName, ...args] = input.split(" ");
+
+    this.input.setInput("");
 
     const command = this.commands.find((c) =>
       typeof c.name === "string" ? c.name === commandName : c.name(commandName),
     );
 
     if (!command) {
-      return this.render.output(Output.error(`command not found: ${commandName}`, 127));
+      return this.render.output(
+        Output.error(`command not found: ${commandName}`, 127),
+      );
     }
 
     this.render.output(await command.exec(this, ...args));
