@@ -31,4 +31,12 @@ export default class Keyboard {
   listen(callable: Callable) {
     this.listeners.unshift(callable);
   }
+
+  stopListen(callable: Callable) {
+    const index = this.listeners.findIndex(l => l === callable)
+
+    if (index < 0) return
+
+    this.listeners.splice(index, 1)
+  }
 }

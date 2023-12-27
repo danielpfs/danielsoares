@@ -12,11 +12,12 @@ type Command = {
 
 export default class Terminal {
   public readonly input = new Input();
+  public readonly plugins = new Map();
 
   constructor(
     public readonly render: Render,
     public readonly keyboard: Keyboard,
-    public readonly plugins: { [keys: string]: typeof Plugin },
+    plugins: { [keys: string]: typeof Plugin },
     public readonly commands: Command[],
   ) {
     this.render.setTerminal(this);
@@ -54,8 +55,8 @@ export default class Terminal {
       return true;
     });
 
-    for (const key in this.plugins) {
-      new this.plugins[key](this);
+    for (const key in plugins) {
+      this.plugins.set(plugins[key], new plugins[key](this));
     }
   }
 
@@ -80,5 +81,13 @@ export default class Terminal {
     }
 
     this.render.output(await command.exec(this, ...args));
+  }
+
+  getPlugin<T extends typeof Plugin>(name: T): InstanceType<T> {
+    const plugin = this.plugins.get(name);
+
+    if (!plugin) throw new Error("plugin not found");
+
+    return plugin;
   }
 }
