@@ -5,11 +5,11 @@ export default class Output {
     return this.status !== 0
   }
 
-  static success(data: unknown) {
+  static success(data?: unknown) {
     return new Output(data)
   }
 
-  static error(data: unknown, status: number) {
+  static error(status: number, data?: unknown) {
     const out = new Output(data, status)
 
     if (!out.isError)

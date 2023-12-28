@@ -3,7 +3,7 @@ import Plugin from "../plugin";
 export default class FakeTyping extends Plugin {
   private running = false;
 
-  async type(value: string) {
+  async input(value: string) {
     if (this.running) return;
     this.running = true;
 
